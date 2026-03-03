@@ -1,0 +1,85 @@
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #213547;
+  background-color: #f5f7fb;
+}
+
+/* Remove Vite center layout */
+body {
+  margin: 0;
+}
+
+/* Headings */
+h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+h3 {
+  font-size: 1.4rem;
+}
+
+/* Buttons */
+button {
+  border-radius: 10px;
+  border: none;
+  padding: 0.75em 1.5em;
+  font-size: 1rem;
+  font-weight: 500;
+  background-color: #4f46e5;
+  color: white;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+button:hover {
+  background-color: #4338ca;
+  transform: translateY(-1px);
+}
+
+/* Layout scale helpers */
+.main-content {
+  padding: 32px 40px;
+  width: 100%;
+  max-width: 1600px;
+}
+
+.sidebar {
+  width: 270px;
+}
+
+.hero-card {
+  padding: 40px;
+  border-radius: 20px;
+}
+
+.hero-title {
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+.hero-subtext {
+  font-size: 18px;
+  margin-top: 12px;
+}
+
+.stat-card {
+  padding: 26px;
+  border-radius: 18px;
+}
+
+.stat-card .value {
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.chart-container {
+  height: 340px;
+}

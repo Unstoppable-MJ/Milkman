@@ -1,14 +1,12 @@
 from django.db import models
+from django.conf import settings   # ✅ IMPORTANT
 
-# Create your models here.
 class Customer(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100)
-    phone = models.CharField(max_length=100)
-    address = models.CharField(max_length=100)
-    password = models.CharField(max_length=100)
-    is_active = models.BooleanField(default=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,   # ✅ FIXED
+        on_delete=models.CASCADE
+    )
+    phone = models.CharField(max_length=15)
 
     def __str__(self):
-        return self.name
-        
+        return self.user.username
