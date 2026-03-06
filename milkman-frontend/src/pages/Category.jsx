@@ -1,109 +1,103 @@
-import { useEffect, useState } from "react";
-import API from "../services/api";
-import ImageCard from "../components/ImageCard";
-import { imageForCategory, DEFAULT_MILK_CATEGORIES } from "../constants/categoryImages";
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import Card from '../components/Card';
+import Button from '../components/Button';
+import Badge from '../components/Badge';
+import Input from '../components/Input';
 
-export default function Category() {
-  const [items, setItems] = useState([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState("");
+const Category = () => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
 
-  const load = async () => {
+  const fetchCategories = async () => {
     try {
-      const { data } = await API.get("/category/category/");
-      setItems(data);
-    } catch {
-      setError("Failed to load categories");
+      const res = await api.get('/category/');
+      setCategories(res.data);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
-  const add = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/category/category/", { name, description, is_active: true });
-      setName("");
-      setDescription("");
-      load();
-    } catch {
-      setError("Failed to add category");
+      await api.post('/category/', { name, description, is_active: true });
+      setShowModal(false);
+      setName('');
+      setDescription('');
+      fetchCategories();
+    } catch (err) {
+      alert("Error adding category.");
     }
   };
 
-  const remove = async (id) => {
-    try {
-      await API.delete(`/category/category/${id}/`);
-      load();
-    } catch {
-      setError("Failed to delete category");
+  const handleDelete = async (id) => {
+    if (window.confirm("Delete this category?")) {
+      await api.delete(`/category/${id}/`);
+      fetchCategories();
     }
   };
 
   return (
-    <div className="space-y-10 pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
-          <p className="text-slate-500">Organize your products by type</p>
+          <h1 className="text-3xl font-extrabold text-slate-900">Categories</h1>
+          <p className="text-slate-500">Organize your products for easy discovery.</p>
         </div>
+        <Button onClick={() => setShowModal(true)}>+ New Category</Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {categories.map((cat) => (
+          <Card key={cat.id} className="p-6 space-y-4 group relative">
+            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+              📁
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-slate-800 text-lg">{cat.name}</h3>
+              <p className="text-sm text-slate-500 line-clamp-2">{cat.description || 'General dairy category'}</p>
+            </div>
+            <div className="pt-2 border-t border-slate-50 flex items-center justify-between">
+              <Badge variant="info">Active</Badge>
+              <button onClick={() => handleDelete(cat.id)} className="text-slate-300 hover:text-state-danger transition-colors">🗑️</button>
+            </div>
+          </Card>
+        ))}
+
         <button
-          onClick={async () => {
-            for (const c of DEFAULT_MILK_CATEGORIES) {
-              try {
-                await API.post("/category/category/", { ...c, is_active: true });
-              } catch {}
-            }
-            load();
-          }}
-          className="btn-secondary"
+          onClick={() => setShowModal(true)}
+          className="p-6 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-brand-primary/40 hover:text-brand-primary transition-all group"
         >
-          <span>🚀</span> Quick Add Presets
+          <span className="text-3xl group-hover:scale-110 transition-transform">➕</span>
+          <span className="font-bold text-sm">Add Category</span>
         </button>
       </div>
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-xl">{error}</div>}
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-        {items.map((c) => (
-          <ImageCard
-            key={c.id}
-            image={imageForCategory(c.name)}
-            title={c.name}
-            subtitle={c.description}
-            onDelete={() => remove(c.id)}
-          />
-        ))}
-
-        {/* Inline Add Card */}
-        <div className="glass-card p-6 border-2 border-dashed border-slate-200 hover:border-brand-primary/40 transition-colors flex flex-col justify-center items-center min-h-[240px] group">
-          <form onSubmit={add} className="w-full space-y-4">
-            <div className="text-center mb-2">
-              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-2xl mx-auto group-hover:scale-110 transition-transform">➕</div>
-              <h3 className="font-bold text-slate-900 mt-2">New Category</h3>
-            </div>
-            <input
-              className="input text-sm"
-              placeholder="Name (e.g. Cheese)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <input
-              className="input text-sm"
-              placeholder="Short description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <button className="w-full btn-primary py-2 text-sm">
-              Create
-            </button>
-          </form>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <Card className="w-full max-w-md p-8 space-y-6 shadow-2xl">
+            <h2 className="text-2xl font-bold text-slate-900">Create Category</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input label="Category Name" value={name} onChange={e => setName(e.target.value)} required />
+              <Input label="Description" value={description} onChange={e => setDescription(e.target.value)} />
+              <div className="pt-4 flex gap-3">
+                <Button type="submit" className="flex-1">Create</Button>
+                <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">Cancel</Button>
+              </div>
+            </form>
+          </Card>
         </div>
-      </div>
+      )}
     </div>
   );
-}
+};
+
+export default Category;

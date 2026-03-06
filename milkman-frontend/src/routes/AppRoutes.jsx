@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { authService } from "../services/api";
 
-import MainLayout from "../layout/MainLayout";
 import CustomerLayout from "../layout/CustomerLayout";
+import AdminLayout from "../layout/AdminLayout";
 
 import Dashboard from "../pages/Dashboard";
 import Customers from "../pages/Customers";
@@ -13,31 +14,26 @@ import Login from "../pages/Login";
 import LandingPage from "../pages/LandingPage";
 import Shop from "../pages/Shop";
 import Cart from "../pages/Cart";
+import Profile from "../pages/Profile";
 
-/* 🔐 Basic Auth Check */
-function RequireAuth({ children }) {
-  const token = localStorage.getItem("accessToken");
-  if (!token) return <Navigate to="/login" replace />;
+import Orders from "../pages/Orders";
+
+/* 🔐 Auth Guard */
+function RequireAuth({ children, role }) {
+  const isAuthenticated = authService.isAuthenticated();
+  const userRole = authService.getRole();
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role && userRole !== role) {
+    return userRole === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/shop" replace />;
+  }
   return children;
-}
-
-/* 👨‍💼 Admin Only */
-function RequireAdmin({ children }) {
-  const role = localStorage.getItem("role");
-  return role === "admin" ? children : <Navigate to="/shop" replace />;
-}
-
-/* 👤 Customer Only */
-function RequireCustomer({ children }) {
-  const role = localStorage.getItem("role");
-  return role === "customer" ? children : <Navigate to="/dashboard" replace />;
 }
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* 🌍 Public Pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
@@ -45,35 +41,36 @@ export default function AppRoutes() {
         {/* 👤 CUSTOMER ROUTES */}
         <Route
           element={
-            <RequireAuth>
-              <RequireCustomer>
-                <CustomerLayout />
-              </RequireCustomer>
+            <RequireAuth role="customer">
+              <CustomerLayout />
             </RequireAuth>
           }
         >
           <Route path="/shop" element={<Shop />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* 👨‍💼 ADMIN ROUTES */}
         <Route
           element={
-            <RequireAuth>
-              <RequireAdmin>
-                <MainLayout />
-              </RequireAdmin>
+            <RequireAuth role="admin">
+              <AdminLayout />
             </RequireAuth>
           }
         >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/category" element={<Category />} />
-          <Route path="/staff" element={<Staff />} />
-          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/admin" element={<Dashboard />} />
+          <Route path="/admin/customers" element={<Customers />} />
+          <Route path="/admin/products" element={<Products />} />
+          <Route path="/admin/categories" element={<Category />} />
+          <Route path="/admin/staff" element={<Staff />} />
+          <Route path="/admin/subscriptions" element={<Subscription />} />
+          <Route path="/admin/orders" element={<Orders />} />
+          {/* Redirect legacy /dashboard to /admin */}
+          <Route path="/dashboard" element={<Navigate to="/admin" replace />} />
         </Route>
 
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

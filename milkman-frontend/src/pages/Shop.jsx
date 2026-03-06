@@ -1,140 +1,120 @@
-import { useEffect, useState } from "react";
-import API from "../services/api";
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import ProductCard from '../components/ProductCard';
+import Card from '../components/Card';
+import Button from '../components/Button';
+import Badge from '../components/Badge';
 
-export default function Shop() {
+const Shop = () => {
   const [products, setProducts] = useState([]);
-
-  const loadProducts = async () => {
-    try {
-      const { data } = await API.get("/product/");
-      setProducts(data);
-    } catch (err) {
-      console.error("Error loading products:", err);
-    }
-  };
+  const [categories, setCategories] = useState([]);
+  const [selectedCat, setSelectedCat] = useState('All');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProducts();
+    const fetchData = async () => {
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          api.get('/product/'),
+          api.get('/category/')
+        ]);
+        setProducts(prodRes.data);
+        setCategories(catRes.data);
+      } catch (err) {
+        console.error("Failed to fetch shop data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  const addToCart = (product) => {
-    const existingCart =
-      JSON.parse(localStorage.getItem("cart")) || [];
-
-    const itemIndex = existingCart.findIndex(
-      (i) => i.id === product.id
-    );
-
-    if (itemIndex > -1) {
-      existingCart[itemIndex].quantity += 1;
-    } else {
-      existingCart.push({ ...product, quantity: 1 });
-    }
-
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(existingCart)
-    );
-  };
+  const filteredProducts = selectedCat === 'All'
+    ? products
+    : products.filter(p => (p.category_name || 'General') === selectedCat);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-100 p-10">
+    <div className="min-h-screen pb-24">
+      {/* Aesthetic Top Banner */}
+      <div className="bg-slate-900 text-white rounded-[2.5rem] p-10 md:p-16 mb-12 relative overflow-hidden shadow-2xl">
+        {/* Glow Effects */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-primary rounded-full mix-blend-screen filter blur-[100px] opacity-40 animate-pulse"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-secondary rounded-full mix-blend-screen filter blur-[100px] opacity-30"></div>
 
-      <h1 className="text-4xl font-bold mb-12 text-gray-800">
-        🛒 Shop Products
-      </h1>
+        <div className="relative z-10 max-w-2xl">
+          <Badge variant="glass" className="bg-white/10 border-white/20 text-blue-200 mb-6 py-2">Premium Selection</Badge>
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4 leading-tight">
+            Freshness, <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-300">Delivered.</span>
+          </h1>
+          <p className="text-slate-300 text-lg md:text-xl font-medium max-w-lg">
+            Straight from the farm to your door. Explore our handpicked dairy and daily essentials.
+          </p>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-
-        {products.map((product) => {
-
-const price = Number(product.price);
-
-const finalPrice =
-  product.discount_percent > 0
-    ? price - (price * Number(product.discount_percent)) / 100
-    : price;
-          return (
-            <div
-              key={product.id}
-              className="group relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 overflow-hidden border border-white/40"
+      <div className="space-y-10">
+        {/* Sticky Filters Ribbon */}
+        <div className="glass-header -mx-6 px-6 py-4 md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-none md:shadow-none flex items-center justify-between gap-6 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-3 w-max">
+            <button
+              onClick={() => setSelectedCat('All')}
+              className={`pill-btn ${selectedCat === 'All' ? 'pill-active' : 'pill-inactive'}`}
             >
+              All Products
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCat(cat.name)}
+                className={`pill-btn ${selectedCat === cat.name ? 'pill-active' : 'pill-inactive'}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
 
-              {/* IMAGE */}
-              <div className="relative overflow-hidden rounded-t-3xl">
-                <img
-                  src={
-                    product.image
-                      ? `http://127.0.0.1:8000${product.image}`
-                      : "https://via.placeholder.com/400x300"
-                  }
-                  alt={product.name}
-                  className="h-64 w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+          <div className="hidden lg:flex items-center gap-2 text-sm font-bold text-slate-400 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
+            <span>Showing {filteredProducts.length} Results</span>
+          </div>
+        </div>
 
-                {/* Discount Badge */}
-                {product.discount_percent > 0 && (
-                  <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
-                    {product.discount_percent}% OFF
-                  </div>
-                )}
-
-                {/* Stock Badge */}
-                <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-4 py-1 rounded-full text-sm font-semibold shadow">
-                  {product.stock > 0 ? (
-                    <span className="text-green-600">In Stock</span>
-                  ) : (
-                    <span className="text-red-500">Out of Stock</span>
-                  )}
+        {loading ? (
+          /* Loading Skeletons - Advanced */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="advanced-card p-4 space-y-6">
+                <div className="aspect-[4/3] bg-slate-100 rounded-2xl animate-pulse"></div>
+                <div className="space-y-3 px-2">
+                  <div className="h-3 bg-slate-100 rounded w-1/3 animate-pulse"></div>
+                  <div className="h-5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
+                  <div className="h-4 bg-slate-50 rounded w-full animate-pulse"></div>
                 </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          /* Advanced Product Grid */
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-12 pt-4">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
 
-              {/* CONTENT */}
-              <div className="p-6 space-y-4">
-
-                <h2 className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition">
-                  {product.name}
-                </h2>
-
-                <p className="text-gray-500 text-sm line-clamp-2">
-                  {product.description}
-                </p>
-
-                {/* PRICE */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    {product.discount_percent > 0 && (
-                      <p className="text-gray-400 line-through text-sm">
-                        ₹{product.price}
-                      </p>
-                    )}
-                    <p className="text-2xl font-bold text-blue-600">
-                      ₹{finalPrice.toFixed(2)}
-                    </p>
-                  </div>
-
-                  <span className="text-sm text-gray-500">
-                    {product.stock} pcs
-                  </span>
+            {filteredProducts.length === 0 && (
+              <div className="col-span-full py-32 flex flex-col items-center justify-center space-y-6">
+                <div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center text-6xl shadow-inner">
+                  🔍
                 </div>
-
-                {/* BUTTON */}
-                <button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock === 0}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-xl disabled:bg-gray-400"
-                >
-                  {product.stock === 0
-                    ? "Out of Stock"
-                    : "Add to Cart 🛒"}
-                </button>
-
+                <h3 className="text-2xl font-black text-slate-800">No products found</h3>
+                <p className="text-slate-500 font-medium text-lg text-center max-w-md">We couldn't find anything in this category right now. Check back later!</p>
+                <button onClick={() => setSelectedCat('All')} className="btn-primary mt-4">Browse All</button>
               </div>
-            </div>
-          );
-        })}
-
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default Shop;

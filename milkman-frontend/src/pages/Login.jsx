@@ -1,121 +1,153 @@
-import { useState } from "react";
-import API from "../services/api";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import Card from '../components/Card';
 
-export default function Login() {
+const Login = () => {
   const navigate = useNavigate();
+  const [loginType, setLoginType] = useState('customer'); // 'customer' or 'admin'
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [loginType, setLoginType] = useState("customer"); // 🔥 default
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
+    setLoading(true);
 
     try {
-      const { data } = await API.post("/api/token/", {
-        username,
-        password,
-      });
+      const data = await authService.login(username, password);
 
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-
-      // Get user role
-      const userRes = await API.get("/accounts/me/", {
-        headers: {
-          Authorization: `Bearer ${data.access}`,
-        },
-      });
-
-      const role = userRes.data.role;
-
-      // 🔥 Role validation
-      if (role !== loginType) {
-        setError(`This account is not a ${loginType}`);
+      if (data.role !== loginType) {
+        setError(`This account does not have ${loginType} privileges.`);
+        setLoading(false);
         return;
       }
 
-      localStorage.setItem("role", role);
-
-      // 🔥 Redirect based on role
-      if (role === "admin") {
-        navigate("/dashboard");
+      if (data.role === 'admin') {
+        navigate('/admin');
       } else {
-        navigate("/shop");
+        navigate('/shop');
       }
-
-    } catch {
-      setError("Invalid username or password");
+    } catch (err) {
+      setError('Invalid username or password. Please try again.');
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white shadow-lg rounded-lg w-full max-w-md p-8 space-y-6">
-
-        <h1 className="text-2xl font-bold text-center">
-          Milkman Login
-        </h1>
-
-        {/* 🔥 Toggle Buttons */}
-        <div className="flex gap-4 justify-center">
-          <button
-            onClick={() => setLoginType("customer")}
-            className={`px-4 py-2 rounded ${
-              loginType === "customer"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            Customer
-          </button>
-
-          <button
-            onClick={() => setLoginType("admin")}
-            className={`px-4 py-2 rounded ${
-              loginType === "admin"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            Admin
-          </button>
+    <div className="min-h-screen flex items-stretch bg-white">
+      {/* Left Side: Illustration/Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative items-center justify-center p-12 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-20">
+          {/* Pattern/Grid */}
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#2563eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
         </div>
 
-        {error && (
-          <div className="bg-red-100 text-red-600 p-2 rounded text-center">
-            {error}
+        <div className="relative z-10 text-center space-y-8">
+          <div className="w-24 h-24 bg-brand-primary rounded-3xl mx-auto flex items-center justify-center text-white text-5xl font-bold shadow-2xl shadow-brand-primary/40 rotate-12">
+            M
           </div>
-        )}
+          <div className="space-y-4">
+            <h1 className="text-5xl font-extrabold text-white tracking-tight">
+              Freshness <br />
+              <span className="text-brand-primary">Delivered Daily.</span>
+            </h1>
+            <p className="text-slate-400 text-lg max-w-md mx-auto">
+              Experience the finest dairy and grocery delivery service with premium quality guaranteed.
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Username"
-            className="w-full border p-2 rounded"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+        {/* Floating circles for aesthetic */}
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-brand-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-brand-secondary/10 rounded-full blur-3xl"></div>
+      </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full border p-2 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+      {/* Right Side: Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 bg-slate-50">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center space-y-2 lg:text-left">
+            <h2 className="text-3xl font-bold text-slate-900">Welcome Back</h2>
+            <p className="text-slate-500">Please enter your details to sign in</p>
+          </div>
 
-          <button className="w-full bg-blue-600 text-white py-2 rounded">
-            Login as {loginType}
-          </button>
-        </form>
+          <Card className="p-1 shadow-sm border border-slate-200">
+            <div className="flex">
+              <button
+                onClick={() => setLoginType('customer')}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${loginType === 'customer' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+              >
+                Customer Portal
+              </button>
+              <button
+                onClick={() => setLoginType('admin')}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${loginType === 'admin' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-500 hover:text-slate-700'
+                  }`}
+              >
+                Admin Dashboard
+              </button>
+            </div>
+          </Card>
 
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 animate-shake">
+              <span>⚠️</span> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <Input
+              label="Username"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input type="checkbox" className="w-4 h-4 rounded text-brand-primary focus:ring-brand-primary/20" />
+                <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">Remember me</span>
+              </label>
+              <button type="button" className="text-sm font-semibold text-brand-primary hover:text-blue-700 transition-colors">
+                Forgot password?
+              </button>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : `Login as ${loginType === 'admin' ? 'Admin' : 'Customer'}`}
+            </Button>
+          </form>
+
+          <p className="text-center text-slate-500 text-sm">
+            Don't have an account?{' '}
+            <button className="text-brand-primary font-bold hover:text-blue-700 transition-colors">
+              Create one now
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

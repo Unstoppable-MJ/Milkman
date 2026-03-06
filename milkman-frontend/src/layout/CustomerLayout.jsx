@@ -1,55 +1,21 @@
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
-export default function CustomerLayout() {
-  const navigate = useNavigate();
-  const role = localStorage.getItem("role");
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    navigate("/login");
-  };
-
+const CustomerLayout = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
-
-      {/* Top Navbar */}
-      <nav className="bg-white shadow-md p-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-blue-600">
-          🥛 Milkman Shop
-        </Link>
-
-        <div className="flex items-center gap-6">
-          <Link to="/shop" className="font-medium hover:text-blue-600">
-            Shop
-          </Link>
-
-          {role === "customer" && (
-            <Link to="/cart" className="font-medium hover:text-blue-600">
-              🛒 Cart
-            </Link>
-          )}
-
-          {role === "admin" && (
-            <Link to="/dashboard" className="font-medium hover:text-blue-600">
-              Dashboard
-            </Link>
-          )}
-
-          <button
-            onClick={handleLogout}
-            className="text-red-500 font-medium hover:text-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      {/* Page Content */}
-      <div className="p-10">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <Navbar />
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-16">
         <Outlet />
-      </div>
+      </main>
+      <footer className="bg-white border-t border-slate-200 py-8">
+        <div className="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+          &copy; {new Date().getFullYear()} Milkman Delivery. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
-}
+};
+
+export default CustomerLayout;

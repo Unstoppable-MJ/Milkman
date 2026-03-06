@@ -1,7 +1,10 @@
-from django.urls import path
-from .views import SubscriptionListCreate, SubscriptionDetail
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import SubscriptionViewSet
+
+router = DefaultRouter()
+router.register(r'', SubscriptionViewSet, basename='subscription')
 
 urlpatterns = [
-    path('', SubscriptionListCreate.as_view(), name='subscription-list'),
-    path('<int:pk>/', SubscriptionDetail.as_view(), name='subscription-detail'),
+    path('', include(router.urls)),
 ]
